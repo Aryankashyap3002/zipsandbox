@@ -2,39 +2,55 @@ import { create } from "zustand";
 import { useActiveFileTabStore } from "./activeFileTabStore";
 import { useTreeStructureStore } from "./treeStructureStore";
 import { usePortStore } from "./portStore";
+import { useChatStore } from "./chatStore";
 
-export const useEditorSocketStore = create((set) => ({
+export const useEditorSocketStore = create((set, get) => ({
     editorSocket: null,
+    collaborators: [],
+    
     setEditorSocket: (incomingSocket) => {
+        const { setActiveFileTab } = useActiveFileTabStore.getState();
+        const { setTreeStructure } = useTreeStructureStore.getState();
+        const { setPort } = usePortStore.getState();
+        const { addMessage, addTypingUser, removeTypingUser } = useChatStore.getState();
 
-        const activeFileTabSetter = useActiveFileTabStore.getState().setActiveFileTab;
-        const projectTreeStructureSetter = useTreeStructureStore.getState().setTreeStructure;
-        const portSetter = usePortStore.getState().setPort;
-
+        // Editor events
         incomingSocket?.on("readFileSuccess", (data) => {
-            console.log("Read file success", data);
             const fileExtension = data.path.split('.').pop();
-            activeFileTabSetter(data.path, data.value, fileExtension);
+            setActiveFileTab(data.path, data.value, fileExtension);
         });
 
-        incomingSocket?.on("writeFileSuccess", (data) => {
-            console.log("Write file success", data);
-            // incomingSocket.emit("readFile", {
-            //     pathToFileOrFolder: data.path
-            // })
+        // Chat events
+        incomingSocket?.on("NewMessageReceived", (data) => {
+            addMessage(data);
         });
 
-        incomingSocket?.on("deleteFileSuccess", () => {
-            projectTreeStructureSetter();
+        // Collaboration events
+        incomingSocket?.on("CodeUpdate", (data) => {
+            if(data.path === useActiveFileTabStore.getState().activeFileTab?.path) {
+                setActiveFileTab(data.path, data.content, data.extension);
+            }
         });
 
-        incomingSocket?.on("getPortSuccess", ({ port }) => {
-            console.log("port data", port);
-            portSetter(port);
-        })
-
-        set({
-            editorSocket: incomingSocket
+        incomingSocket?.on("UserTyping", (userId) => {
+            addTypingUser(userId);
+            setTimeout(() => removeTypingUser(userId), 3000);
         });
+
+        incomingSocket?.on("CollaboratorsUpdated", (users) => {
+            set({ collaborators: users });
+        });
+
+        set({ editorSocket: incomingSocket });
+    },
+    
+    emitCodeUpdate: (data) => {
+        const socket = get().editorSocket;
+        socket?.emit("CodeUpdate", data);
+    },
+    
+    joinProject: (projectId) => {
+        const socket = get().editorSocket;
+        socket?.emit("JoinProject", projectId);
     }
 }));

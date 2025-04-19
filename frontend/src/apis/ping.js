@@ -1,4 +1,4 @@
-import axios from '../config/axiosConfig';
+import axios from '../config/fetchConfig';
 
 export const pingApi = async () => {
     try {

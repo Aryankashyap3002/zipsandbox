@@ -5,7 +5,6 @@ import { useFileContextMenuStore } from "../../../store/fileContextMenuStore";
 import { FileContextMenu } from "../../molecules/ContextMenu/FileContextMenu";
 
 export const TreeStructure = () => {
-
     const {treeStructure, setTreeStructure } = useTreeStructureStore();
     const { 
         file,
@@ -22,17 +21,20 @@ export const TreeStructure = () => {
     }, [setTreeStructure, treeStructure]);
 
     return (
-        <>
-        {isFileContextOpen && fileContextX && fileContextY && (
-            <FileContextMenu  
-                x={fileContextX}
-                y={fileContextY}
-                path={file}
-            />
-        )}
-            <TreeNode
-                fileFolderData={treeStructure}
-            />
-        </>
+        <div className="h-full py-2">
+            {isFileContextOpen && fileContextX && fileContextY && (
+                <FileContextMenu  
+                    x={fileContextX}
+                    y={fileContextY}
+                    path={file}
+                />
+            )}
+            <h3 className="text-white text-lg font-medium px-4 mb-4">Project Files</h3>
+            <div className="h-full overflow-auto">
+                <TreeNode
+                    fileFolderData={treeStructure}
+                />
+            </div>
+        </div>
     )
 }
