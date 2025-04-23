@@ -1,39 +1,45 @@
-import { ChevronDownIcon, ListFilterIcon, SquarePenIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { 
 
-import { WorkspaceInviteModal } from '@/components/organisms/Modals/WorkspaceInviteModal';
- import { Button } from '@/components/ui/button';
- import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
- import { useAuth } from '@/hooks/context/useAuth';
- import { useWorkspacePreferencesModal } from '@/hooks/context/useWorkspacePreferencesModal';
- 
- export const WorkspacePanelHeader = ({ workspace }) => {
- 
-     console.log('workspace is', workspace);
+  ChevronDownIcon, 
+  ListFilterIcon,
+  SquarePenIcon, 
 
-     const [openInviteModal, setOpenInviteModal] = useState(false);
- 
-     const { setWorkspace } = useWorkspacePreferencesModal();
- 
-     const workspacemembers = workspace?.members;
- 
-     const { auth } = useAuth();
- 
-     console.log(auth);
- 
-     const isLoggedInUserAdminOfWorkspace = workspacemembers?.find(member => member.memberId._id  === auth?.user?._id && member.role === 'admin');
- 
-     console.log(isLoggedInUserAdminOfWorkspace);
- 
-     const { setOpenPreferences, setInitialValue } = useWorkspacePreferencesModal();
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-     useEffect(() => {
-        setWorkspace(workspace);
-    }, []);
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { WorkspaceInviteModal } from '@/components/organisms/Modals/WorkspaceInviteModal'; 
+import { useWorkspacePreferencesModal } from '@/hooks/context/useWorkspacePreferencesModal';
+import { useAuth } from '@/hooks/context/useAuth';
 
- 
 
-     return (
+// WorkspacePanelHeader Component
+const WorkspacePanelHeader = ({ workspace }) => {
+    console.log('workspace is', workspace?.data?.name);
+
+  const [openInviteModal, setOpenInviteModal] = useState(false);
+  const { setWorkspace, setOpenPreferences, setInitialValue } = useWorkspacePreferencesModal();
+  const { auth } = useAuth();
+  
+  const workspacemembers = workspace?.data?.members;
+  const isLoggedInUserAdminOfWorkspace = workspacemembers?.find(
+    member => member.memberId._id === auth?.user?._id && member.role === 'admin'
+  );
+
+  useEffect(() => {
+    console.log('Setting workspace in context');
+    setWorkspace(workspace);
+  }, [workspace, setWorkspace]);
+
+  const handlePreferencesClick = () => {
+    console.log('Preferences clicked');
+    setInitialValue(workspace?.data?.name);
+    setOpenPreferences(true);
+  };
+
+    
+    return (
         <>
 
          <WorkspaceInviteModal 
@@ -55,7 +61,7 @@ import { WorkspaceInviteModal } from '@/components/organisms/Modals/WorkspaceInv
                          className='font-semibold text-lg w-auto p-1.5 overflow-hidden'
                      >
                          <span className='truncate'>
-                             {workspace?.name}
+                             {workspace?.data?.name}
                          </span>
                          <ChevronDownIcon className='size-5 ml-1' />
                      </Button>
@@ -63,14 +69,14 @@ import { WorkspaceInviteModal } from '@/components/organisms/Modals/WorkspaceInv
  
                  <DropdownMenuContent side='bottom' align='start' className='w-64'>
                      <DropdownMenuItem>
-                         <div
+                         <div 
                              className='size-9 relative overflow-hidden text-white font-semibold text-xl rounded-md flex items-center justify-center mr-2 bg-[#616061]'
                          >
-                             {workspace?.name.charAt(0).toUpperCase()}
+                             {workspace?.data?.name.charAt(0).toUpperCase()}
                          </div>
                          <div className='flex flex-col items-start'>
                              <p className='font-bold'>
-                                 {workspace?.name}
+                                 {workspace?.data?.name}
                              </p>
                              <p className='text-xs text-muted-foreground'>
                                  Active Workspace
@@ -82,10 +88,7 @@ import { WorkspaceInviteModal } from '@/components/organisms/Modals/WorkspaceInv
                          <>
                              <DropdownMenuItem
                                  className='cursor-pointer py-2'
-                                 onClick={() => {
-                                    setInitialValue(workspace?.name);
-                                    setOpenPreferences(true);
-                                }}
+                                 onClick={handlePreferencesClick}
                              >
                                  Preferences
                              </DropdownMenuItem>
@@ -94,7 +97,7 @@ import { WorkspaceInviteModal } from '@/components/organisms/Modals/WorkspaceInv
                                  className='cursor-pointer py-2'
                                  onClick={() => {setOpenInviteModal(true);}}
                              >
-                                 Invite people to {workspace?.name}
+                                 Invite people to {workspace?.data?.name}
                              </DropdownMenuItem>
                          </>
                      )}
@@ -122,5 +125,8 @@ import { WorkspaceInviteModal } from '@/components/organisms/Modals/WorkspaceInv
          </div>
 
         </>
-     );
- };
+    );
+};
+
+
+export default WorkspacePanelHeader;

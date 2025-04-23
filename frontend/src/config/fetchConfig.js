@@ -1,22 +1,37 @@
-// fetchHelper.js
 const fetchWithConfig = async (url, options = {}) => {
-    const config = {
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        },
-        ...options
-    };
-    
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}${url}`, config);
-    
-    if (!response.ok) {
-        const error = new Error(`HTTP error! status: ${response.status}`);
-        error.status = response.status;
+    try {
+        const token = localStorage.getItem('token');
+        console.log('Using token:', token); // Log the token being sent
+
+        const config = {
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'x-access-token': token } : {}),
+                ...options.headers
+            },
+            ...options
+        };
+
+        const fullUrl = `${import.meta.env.VITE_BACKEND_URL}${url}`;
+        console.log('Making request to:', fullUrl);
+
+        const response = await fetch(fullUrl, config);
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const error = new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            error.status = response.status;
+            error.data = errorData;
+            throw error;
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Fetch error:', error);
         throw error;
     }
-    
-    return response.json();
 };
+
+
 
 export default fetchWithConfig;

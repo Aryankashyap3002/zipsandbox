@@ -1,0 +1,63 @@
+import { useQueryClient } from '@tanstack/react-query';
+import { getPresignedUrl, uploadImageToAWSpresignedUrl } from '@/apis/s3';
+import { Editor } from '@/components/atoms/Editor/Editor';
+import { useAuth } from '@/hooks/context/useAuth';
+import { useCurrentWorkspace } from '@/hooks/context/useCurrentWorkspace';
+import { useSocket } from '@/hooks/context/useSocket';
+
+export const ChatInput = () => {
+    const { socket, currentChannel } = useSocket();
+    const { auth } = useAuth();
+    const { currentWorkspace } = useCurrentWorkspace();
+    const queryClient = useQueryClient();
+
+    async function handleSubmit({ body, image }) {
+        try {
+            console.log(body, image);
+            let fileUrl = null;
+
+            if(image) {
+                const preSignedUrl = await queryClient.fetchQuery({
+                    queryKey: ['getPresignedUrl'],
+                    queryFn: () => getPresignedUrl({ token: auth?.token }),
+                });
+
+                console.log('Presigned url', preSignedUrl);
+
+                const responseAws = await uploadImageToAWSpresignedUrl({
+                    url: preSignedUrl,
+                    file: image
+                });
+                console.log('file upload success', responseAws);
+                fileUrl = preSignedUrl.split('?')[0];
+            }
+
+            socket?.emit('NewMessage', {
+                channelId: currentChannel,
+                body,
+                image: fileUrl,
+                senderId: auth?.user?._id,
+                workspaceId: currentWorkspace?._id
+            }, (data) => {
+                console.log('Message sent', data);
+                // Clear the editor after sending
+                // Add logic here to clear editor if needed
+            });
+        } catch (error) {
+            console.error('Error sending message:', error);
+            // You might want to show a toast or error message here
+        }
+    }
+
+    return (
+        <div className="p-4 bg-[#1f1f2e] border-t border-white/10">
+            <Editor
+                placeholder={`Message #${currentChannel?.name || 'channel'}`}
+                onSubmit={handleSubmit}
+                onCancel={() => {}}
+                disabled={false}
+                defaultValue=""
+            />
+        </div>
+    );
+};

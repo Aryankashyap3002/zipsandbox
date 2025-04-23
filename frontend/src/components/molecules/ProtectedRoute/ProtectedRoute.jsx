@@ -4,15 +4,18 @@ import { LucideLoader2 } from 'lucide-react';
  import { useAuth } from '@/hooks/context/useAuth';
  
  export const ProtectedRoute = ({ children }) => {
-     const { auth } = useAuth();
- 
-     if(auth.isLoading) {
-         return <div><LucideLoader2 className="animate-spin ml-2" />Loading...</div>;
-     }
- 
-     if(!auth.user || !auth.token) {
-         return <Navigate to="/auth/signin" />;
-     }
- 
-     return children;
- };
+    const { auth } = useAuth();
+
+    // If loading, show a loading spinner
+    if (auth.isLoading) {
+        return <div><LucideLoader2 className="animate-spin ml-2" />Loading...</div>;
+    }
+
+    // If not authenticated, redirect to signin
+    if (!auth.user || !auth.token) {
+        return <Navigate to="/auth/signin" />;
+    }
+
+    // If authenticated, show the requested route
+    return children;
+};

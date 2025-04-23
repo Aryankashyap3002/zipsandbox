@@ -23,22 +23,23 @@ import { useState } from 'react';
      }
  
      async function handleFormSubmit(e) {
-         e.preventDefault();
-         try {
-             const data = await createWorkspaceMutation({ name: workspaceName });
-             console.log('Created the workspace', data);
-             queryClient.invalidateQueries('fetchWorkspaces');
-         } catch(error) {
-             console.log('Not able to create a new workspace', error);
-         } finally {
-             setWorkspaceName('');
-             setOpenCreateWorkspaceModal(false);
-         }
-     }
+        e.preventDefault();
+        try {
+            const data = await createWorkspaceMutation({ name: workspaceName });
+            console.log('Created the workspace', data);
+            // Use query key array format
+            await queryClient.invalidateQueries(['fetchWorkspaces']);
+        } catch(error) {
+            console.log('Not able to create a new workspace', error);
+        } finally {
+            setWorkspaceName('');
+            setOpenCreateWorkspaceModal(false);
+        }
+    }
  
  
      return (
-         <Dialog
+         <Dialog  
              open={openCreateWorkspaceModal}
              onOpenChange={handleClose}
          >

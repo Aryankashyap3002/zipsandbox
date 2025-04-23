@@ -12,6 +12,8 @@ import { Button } from "antd";
 import { Allotment } from "allotment";
 import "allotment/dist/style.css";
 import { WorkspaceSidebar, FILE_EXPLORER_TOGGLE_EVENT_NAME } from "@/components/organisms/Workspace/WorkspaceSidebar";
+import { CreateChannelModal } from "@/components/molecules/CreateChannelModal/CreateChannelModal";
+import { CreateChannelContextProvider } from "@/context/CreateChannelContext";
 
 export const ProjectPlayground = () => {
     const { projectId: projectIdFromUrl } = useParams();
@@ -19,7 +21,7 @@ export const ProjectPlayground = () => {
     const { setEditorSocket } = useEditorSocketStore();
     const { terminalSocket, setTerminalSocket } = useTerminalSocketStore();
     const [loadBrowser, setLoadBrowser] = useState(false);
-    const [showFileExplorer, setShowFileExplorer] = useState(true);
+    const [showFileExplorer, setShowFileExplorer] = useState(false); // Changed to false initially
 
     useEffect(() => {
         if (projectIdFromUrl) {
@@ -45,79 +47,81 @@ export const ProjectPlayground = () => {
             setShowFileExplorer(prev => !prev);
         };
 
-        // Listen for the custom event
         document.addEventListener(FILE_EXPLORER_TOGGLE_EVENT_NAME, handleFileExplorerToggle);
 
-        // Clean up the event listener when component unmounts
         return () => {
             document.removeEventListener(FILE_EXPLORER_TOGGLE_EVENT_NAME, handleFileExplorerToggle);
         };
     }, []);
 
     return (
-        <div className="flex h-screen bg-[#1e1e2f] overflow-hidden">
-            <div className="h-full flex-shrink-0">
+        <CreateChannelContextProvider>
+            <div className="flex h-screen bg-[#1e1e2f] overflow-hidden">
+                {/* Left navigation sidebar */}
                 <WorkspaceSidebar />
-            </div>
+                
+                {/* File Explorer - conditionally rendered based on showFileExplorer state */}
+                {projectId && showFileExplorer && (
+                    <div
+                        className="flex-shrink-0 overflow-auto transition-all duration-200 ease-in-out"
+                        style={{
+                            backgroundColor: "#1f1f2e",
+                            paddingRight: "10px",
+                            paddingTop: "0.3vh",
+                            minWidth: "250px",
+                            maxWidth: "25%",
+                            height: "100%",
+                            animation: "slideIn 0.2s ease-out"
+                        }}
+                    >
+                        <div className="text-white font-medium py-2 px-3">Project Files</div>
+                        <TreeStructure />
+                    </div>
+                )}
 
-            {projectId && showFileExplorer && (
-                <div
-                    className="flex-shrink-0 overflow-auto animate-slide-in"
-                    style={{
-                        backgroundColor: "#1f1f2e",
-                        paddingRight: "10px",
-                        paddingTop: "0.3vh",
-                        minWidth: "250px",
-                        maxWidth: "25%",
-                        height: "100%",
-                        animation: "slideIn 0.2s ease-out"
-                    }}
-                >
-                    <TreeStructure />
+                {/* Main Content Area */}
+                <div className="flex-grow h-full overflow-hidden">
+                    <Allotment>
+                        <Allotment.Pane>
+                            <div className="flex flex-col h-full bg-[#1e1e2f]">
+                                <Allotment vertical={true}>
+                                    <EditorComponent />
+                                    <BrowserTerminal />
+                                </Allotment>
+                            </div>
+                        </Allotment.Pane>
+                        <Allotment.Pane>
+                            <div className="flex flex-col h-full bg-[#2e2f40] p-4">
+                                <Button
+                                    onClick={() => setLoadBrowser(true)}
+                                    style={{
+                                        backgroundColor: "#3b82f6",
+                                        color: "#fff",
+                                        border: "none",
+                                        marginBottom: "12px"
+                                    }}
+                                    onMouseEnter={(e) =>
+                                        (e.currentTarget.style.backgroundColor = "#2563eb")
+                                    }
+                                    onMouseLeave={(e) =>
+                                        (e.currentTarget.style.backgroundColor = "#3b82f6")
+                                    }
+                                >
+                                    Load my browser
+                                </Button>
+                                {loadBrowser && projectIdFromUrl && terminalSocket && (
+                                    <div className="h-full overflow-auto">
+                                        <Browser projectId={projectIdFromUrl} />
+                                    </div>
+                                )}
+                            </div>
+                        </Allotment.Pane>
+                    </Allotment>
                 </div>
-            )}
 
-            <div className="flex-grow h-full overflow-hidden">
-                <Allotment>
-                    <Allotment.Pane>
-                        <div
-                            className="flex flex-col h-full bg-[#1e1e2f]"
-                        >
-                            <Allotment vertical={true}>
-                                <EditorComponent />
-                                <BrowserTerminal />
-                            </Allotment>
-                        </div>
-                    </Allotment.Pane>
-                    <Allotment.Pane>
-                        <div className="flex flex-col h-full bg-[#2e2f40] p-4">
-                            <Button
-                                onClick={() => setLoadBrowser(true)}
-                                style={{
-                                    backgroundColor: "#3b82f6",
-                                    color: "#fff",
-                                    border: "none",
-                                    marginBottom: "12px"
-                                }}
-                                onMouseEnter={(e) =>
-                                    (e.currentTarget.style.backgroundColor = "#2563eb")
-                                }
-                                onMouseLeave={(e) =>
-                                    (e.currentTarget.style.backgroundColor = "#3b82f6")
-                                }
-                            >
-                                Load my browser
-                            </Button>
-                            {loadBrowser && projectIdFromUrl && terminalSocket && (
-                                <div className="h-full overflow-auto">
-                                    <Browser projectId={projectIdFromUrl} />
-                                </div>
-                            )}
-                        </div>
-                    </Allotment.Pane>
-                </Allotment>
+                {/* Channel Creation Modal */}
+                <CreateChannelModal />
             </div>
-        </div>
+        </CreateChannelContextProvider>
     );
 };
-
