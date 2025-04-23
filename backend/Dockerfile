@@ -18,4 +18,4 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt-get install
 RUN echo "PS1='\w '" >> /home/sandbox/.bashrc
 
 # Setup final working directory
-WORKDIR /home/sandbox/app
+WORKDIR /home/sandbox/app 
